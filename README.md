@@ -21,6 +21,8 @@ npx serve .
 | `island-model.js` | the island itself: terrain, water, clouds, the wanderer |
 | `three-d-stage.js` | `<three-d-stage>`, a reusable viewer with orbit controls, lighting and OBJ/GLB export |
 | `styles.css` | page styles |
+| `vendor/three/` | three.js 0.184.0 (the files the pages use), MIT, `vendor/three/LICENSE` |
+| `vendor/fonts/` | Caprasimo and Figtree (latin, woff2, from Fontsource), SIL OFL 1.1, `vendor/fonts/OFL.txt` |
 
 ## Live
 
@@ -28,4 +30,8 @@ Hosted on GitHub Pages: https://mariisno.github.io/oy/
 
 ## License
 
-MIT, see `LICENSE`.
+MIT, see `LICENSE`. The third-party files in `vendor/` keep their own licences (above).
+
+Everything is served from the site itself: no fonts from Google and no scripts from a CDN, so a
+visit sends nothing to third parties. The only thing stored is the day/dusk choice, in `localStorage`
+(`island-time`), on the visitor's own device.

@@ -1,5 +1,9 @@
 /* Organic — design-system tokens and component classes. This file is the source of truth for the system's look; retune it here and see readme.md. */
-@import url('https://fonts.googleapis.com/css2?family=Caprasimo:wght@400&family=Figtree:wght@400;600;700&display=swap');
+/* Fonts are served from this site (vendor/fonts, SIL OFL 1.1, see vendor/fonts/OFL.txt), so no visitor IP goes to Google. Latin subset (covers æøå). */
+@font-face { font-family: 'Caprasimo'; font-style: normal; font-weight: 400; font-display: swap; src: url('vendor/fonts/caprasimo-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 400; font-display: swap; src: url('vendor/fonts/figtree-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 600; font-display: swap; src: url('vendor/fonts/figtree-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Figtree'; font-style: normal; font-weight: 700; font-display: swap; src: url('vendor/fonts/figtree-latin-700-normal.woff2') format('woff2'); }
 
 :root {
   --color-bg: #f5ead8;
