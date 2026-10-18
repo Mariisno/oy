@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Øyhopp — walk the floating islands</title>
+<meta name="description" content="A tiny game on the floating island: walk around, wake the gate, hop across to the next island.">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.184.0/build/three.module.js"
+  },
+  "integrity": {
+    "https://unpkg.com/three@0.184.0/build/three.module.js": "sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J",
+    "https://unpkg.com/three@0.184.0/build/three.core.js": "sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"
+  }
+}
+</script>
+<style>
+  :root {
+    --ink: var(--color-text);
+    --ink-soft: var(--color-neutral-700);
+    --ground: var(--color-bg);
+    --halo: var(--color-accent-200);
+    --chip: color-mix(in srgb, var(--color-bg) 72%, transparent);
+  }
+  html[data-island-time="dusk"] {
+    --ink: var(--color-bg);
+    --ink-soft: var(--color-neutral-300);
+    --ground: #2e2b25;
+    --halo: #4a3a2a;
+    --chip: color-mix(in srgb, #2e2b25 72%, transparent);
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0; overflow: hidden; color: var(--ink);
+    background: radial-gradient(70% 60% at 50% 40%, var(--halo), var(--ground) 75%);
+    transition: background 0.9s ease, color 0.6s ease;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; opacity: 0; transition: opacity 1s ease; }
+  html.ready #game { opacity: 1; }
+  a { color: var(--ink); text-decoration: none; }
+  a:hover { color: var(--color-accent); }
+
+  .frame {
+    position: fixed; inset: 0; pointer-events: none;
+    display: grid; grid-template-rows: auto 1fr auto;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  .frame > * > * { pointer-events: auto; }
+  .top, .bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+  .bottom { align-items: flex-end; }
+  .kicker { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-accent); font-weight: 700; margin: 0 0 4px; }
+  html[data-island-time="dusk"] .kicker { color: var(--color-accent-300); }
+  .place { font-size: clamp(28px, 4.4vw, 48px); line-height: 1; margin: 0; }
+  .chip { font-family: var(--font-heading); font-size: 15px; display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; min-height: 44px; box-sizing: border-box; border-radius: 999px; background: var(--chip); backdrop-filter: blur(6px); }
+  .toggle { display: inline-flex; padding: 4px; gap: 4px; border-radius: 999px; background: var(--chip); backdrop-filter: blur(6px); }
+  .toggle button {
+    font: inherit; font-family: var(--font-heading); font-size: 15px; color: var(--ink);
+    border: 0; background: transparent; padding: 10px 16px; min-height: 44px; border-radius: 999px; cursor: pointer;
+  }
+  .toggle button[aria-pressed="true"] { background: var(--color-accent); color: var(--color-bg); }
+  .toggle button:focus-visible, .chip:focus-visible, .jump:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+  .hint { font-size: 13px; color: var(--ink-soft); margin: 0; }
+  .hint kbd { font-family: inherit; font-weight: 700; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; }
+
+  .toast {
+    position: fixed; left: 50%; top: max(88px, 14vh); transform: translate(-50%, -8px);
+    max-width: min(46ch, calc(100vw - 32px)); box-sizing: border-box;
+    padding: 12px 18px; border-radius: 16px; background: var(--chip); backdrop-filter: blur(8px);
+    font-size: 15px; line-height: 1.4; text-align: center; opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .fade { position: fixed; inset: 0; background: var(--ground); opacity: 0; pointer-events: none; transition: opacity 0.6s ease; }
+  .fade.on { opacity: 0.85; }
+
+  /* touch: the joystick appears where your thumb lands; the jump button sits bottom right */
+  .stick { position: fixed; left: 0; top: 0; width: 0; height: 0; opacity: 0; pointer-events: none; transition: opacity 0.15s; }
+  .stick.on { opacity: 1; }
+  .stick::before, .stick-knob { content: ""; position: absolute; border-radius: 50%; }
+  .stick::before { left: -56px; top: -56px; width: 112px; height: 112px; background: var(--chip); border: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); }
+  .stick-knob { left: -24px; top: -24px; width: 48px; height: 48px; background: var(--color-accent); }
+  .jump {
+    display: none; width: 72px; height: 72px; border-radius: 50%; border: 0;
+    background: var(--chip); backdrop-filter: blur(6px); color: var(--ink);
+    font: inherit; font-family: var(--font-heading); font-size: 15px; touch-action: none;
+  }
+  .jump:active { background: var(--color-accent); color: var(--color-bg); }
+  @media (pointer: coarse) {
+    .jump { display: block; }
+    .hint { display: none; }
+  }
+  /* inside the portfolio dialog the dialog has its own close button and title */
+  html.embed .top a, html.embed .kicker { display: none; }
+  @media (prefers-reduced-motion: reduce) {
+    body, #game, .toast, .fade { transition: none; }
+  }
+</style>
+<script>
+  if (new URLSearchParams(location.search).has('embed')) document.documentElement.classList.add('embed');
+</script>
+</head>
+<body>
+<canvas id="game" tabindex="0" aria-label="A small game: you are a hooded wanderer on a floating island. Walk to the gate to wake it, then cross the stones to the next island."></canvas>
+
+<div class="frame">
+  <header class="top">
+    <div>
+      <p class="kicker">Øyhopp · a small world</p>
+      <h1 class="place" aria-live="polite">Home</h1>
+    </div>
+    <a class="chip" href="index.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+      Diorama
+    </a>
+  </header>
+  <div></div>
+  <footer class="bottom">
+    <div>
+      <div class="toggle" role="group" aria-label="Time of day">
+        <button type="button" data-time="day" aria-pressed="true">Day</button>
+        <button type="button" data-time="dusk" aria-pressed="false">Dusk</button>
+      </div>
+      <p class="hint" style="margin-top: 10px"><kbd>WASD</kbd> walk · <kbd>Space</kbd> jump · drag or <kbd>Q</kbd><kbd>E</kbd> to look · <kbd>T</kbd> dusk</p>
+    </div>
+    <button type="button" class="jump" aria-label="Jump">Jump</button>
+  </footer>
+</div>
+
+<p class="toast" role="status" aria-live="polite"></p>
+<div class="fade" aria-hidden="true"></div>
+<div class="stick" aria-hidden="true"><div class="stick-knob"></div></div>
+
+<script type="module" src="game/main.js"></script>
+</body>
+</html>
