@@ -64,6 +64,7 @@ const state = {
   stride: 0,
   falling: 0,         // seconds spent falling off the world
   hold: 0,            // a short pause while the gate wakes
+  told: false,        // the fall-off message has been shown for this fall
   gateOpen: false,
   arrived: false,
   windy: false,
@@ -135,7 +136,10 @@ canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   cam.dist = THREE.MathUtils.clamp(cam.dist + e.deltaY * 0.01, 7, 24);
 }, { passive: false });
-document.querySelector('.jump').addEventListener('pointerdown', (e) => { e.preventDefault(); jumpQueued = true; });
+const jumpEl = document.querySelector('.jump');
+jumpEl.addEventListener('pointerdown', (e) => { e.preventDefault(); jumpQueued = true; });
+// keyboard, switch and screen-reader activation send a click without a pointer press first
+jumpEl.addEventListener('click', (e) => { if (e.detail === 0) jumpQueued = true; });
 
 /* ---- messages ----------------------------------------------------------- */
 const toastEl = document.querySelector('.toast');
@@ -145,7 +149,11 @@ function toast(text, ms = 4200) {
   toastEl.textContent = text;
   toastEl.classList.add('on');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('on'), ms);
+  toastTimer = setTimeout(() => {
+    toastEl.classList.remove('on');
+    // empty the live region once it has faded, so the same line is announced again next time
+    toastTimer = setTimeout(() => { toastEl.textContent = ''; }, 500);
+  }, ms);
 }
 let placeName = 'Home';
 function setPlace(name) {
@@ -263,12 +271,15 @@ function step(dt, t) {
 
   if (state.grounded) {
     state.falling = 0;
+    if (state.told) { state.told = false; fadeEl.classList.remove('on'); }
     if (state.on === home || state.on === mill) setPlace(state.on.label);
     state.safe = { x: state.pos.x, y: state.pos.y, z: state.pos.z, w: state.on };
   } else if (g.h === null) {
     state.falling += dt;
-    if (state.falling > 0.35 && !fadeEl.classList.contains('on')) {
-      fadeEl.classList.add('on');
+    if (state.falling > 0.35 && !state.told) {
+      state.told = true;
+      // with reduced motion you are put back almost at once, so the fade would only blink
+      if (!calm) fadeEl.classList.add('on');
       if (state.falling < 1) toast('Whoops. The clouds carry you back.', 2600);
     }
     if (calm ? state.falling > 0.4 : state.falling > 1.4) respawn();

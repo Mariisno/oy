@@ -73,7 +73,8 @@
   }
   .toggle button:hover { background: color-mix(in srgb, var(--color-accent) 14%, transparent); }
   /* accent-700 behind the light text: accent-500 gave 3.0:1 for the 15 px label (axe color-contrast) */
-  .toggle button[aria-pressed="true"] { background: var(--color-accent-700); color: var(--color-bg); }
+  /* plus a ring in the text colour: the chosen time shows by shape, not only by the fill (WCAG 1.4.1; at dusk the fill is 2.1:1 against the chip) */
+  .toggle button[aria-pressed="true"] { background: var(--color-accent-700); color: var(--color-bg); box-shadow: inset 0 0 0 2px var(--ink); }
   .toggle button:active { background: var(--color-accent-800); }
   .toggle button:focus-visible, .back:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
   .toggle svg { width: 18px; height: 18px; }
@@ -96,7 +97,7 @@
       <p class="lede">A toy diorama built entirely in code. Someone lives here — watch them walk from the gate to their door.</p>
     </div>
     <a class="back" href="https://notland-design.vercel.app/work">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path></svg>
       Work
     </a>
   </header>
@@ -104,11 +105,11 @@
   <footer class="bottom">
     <div class="toggle" role="group" aria-label="Time of day">
       <button type="button" data-time="day" aria-pressed="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2m-7.07-2.93 1.41-1.41m11.32-11.32 1.41-1.41M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41"></path></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2m-7.07-2.93 1.41-1.41m11.32-11.32 1.41-1.41M2 12h2m16 0h2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41"></path></svg>
         Day
       </button>
       <button type="button" data-time="dusk" aria-pressed="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
         Dusk
       </button>
     </div>
